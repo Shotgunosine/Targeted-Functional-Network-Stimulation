@@ -1,13 +1,12 @@
-function pfm(C,DistanceMatrix,OutDir,Densities,NumberReps,MinDistance,BadVerts,Structures,NumberCores)
+function pfm(C,DistanceMatrix,OutDir,Densities,NumberReps,MinDistance,BadVerts,Structures,NumberCores, Paths)
 % cjl; cjl2007@med.cornell.edu;
 rng(44); % for reproducibility.
 
 % define "resource" directories;
-ResourceDir = '/home/charleslynch/MultiEchofMRI-Pipeline/res0urces';
-addpath(genpath(ResourceDir));
+addpath(genpath(Paths{1}));
 
 % define the infomap binary location;
-InfoMap = '/home/charleslynch/miniconda3/bin/infomap';
+InfoMap = 'infomap';
 
 % define a list of regions 
 % to be considered in the
