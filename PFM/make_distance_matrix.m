@@ -29,6 +29,10 @@ RH_verts=1:length(RH.vertices);
 LH_verts=LH_verts(LH_idx);
 RH_verts=RH_verts(RH_idx);
 
+% preallocate mats
+LH_mats = zeros(length(LH_verts), length(LH_verts), "uint16");
+RH_mats = zeros(length(RH_verts), length(RH_verts), "uint16");
+
 % start parpool;
 pool = parpool('local',nThreads);
 
@@ -39,12 +43,9 @@ parfor i = 1:length(LH_verts)
     system(['wb_command -surface-geodesic-distance ' MidthickSurfs{1} ' ' num2str(LH_verts(i)-1) ' ' OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
     temp = gifti([OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
     system(['rm ' OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
-    LH(:,i) = temp.cdata(LH_idx); % log distances
+    LH_mats(:,i) = temp.cdata(LH_idx); % log distances
         
 end
-
-% convert to uint8
-LH = uint8(LH);
 
 % sweep through vertices
 parfor i = 1:length(RH_verts)
@@ -53,7 +54,7 @@ parfor i = 1:length(RH_verts)
     system(['wb_command -surface-geodesic-distance ' MidthickSurfs{2} ' ' num2str(RH_verts(i)-1) ' ' OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
     temp = gifti([OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
     system(['rm ' OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
-    RH(:,i) = temp.cdata(RH_idx); % log distances
+    RH_mats(:,i) = temp.cdata(RH_idx); % log distances
     
 end
 
@@ -64,13 +65,12 @@ delete(pool);
 % remove temp dir.;
 [~,~]=system(['rm -rf ' OutDir '/tmp/']);
 
-% convert to uint8
-RH = uint8(RH);
 
 % piece together results (999 = inter-hemispheric)
-Top = [LH ones(length(LH),length(RH))*999]; % lh & dummy rh
-Bottom = [ones(length(RH),length(LH))*999 RH]; % dummy lh & rh
-D = uint8([Top;Bottom]); % combine hemispheres; cortical surface only so far 
+Top = [LH_mats ones(length(LH_mats),length(RH_mats))*999]; % lh & dummy rh
+Bottom = [ones(length(RH_mats),length(LH_mats))*999 RH_mats]; % dummy lh & rh
+D = uint16([Top;Bottom]); % combine hemispheres; cortical surface only so far
+%D = [Top; Bottom];
 
 % extract coordinates for all cortical vertices 
 SurfaceCoords=[LH.vertices; RH.vertices]; % combine hemipsheres 
@@ -82,7 +82,8 @@ AllCoords = [SurfaceCoords;SubcorticalCoords]; % combine
 
 % compute euclidean distance 
 % between all vertices & voxels 
-D2 = uint8(pdist2(AllCoords,AllCoords));
+D2 = uint16(pdist2(AllCoords,AllCoords));
+% D2 = pdist2(AllCoords,AllCoords);
 
 % combine distance matrices; geodesic & euclidean  
 D = [D ; D2(size(D,1)+1:end,1:size(D,2))]; % vertcat
