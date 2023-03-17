@@ -74,7 +74,8 @@ O.data(59413:end) = 0; % cortex only
 ft_write_cifti_mod([OutDir '/ROI/TargetNetwork+SearchSpace'],O); % write out the .dtseries.nii;
 
 % this is the full network target,constrained to search space, after sulcal + medial wall masking;
-TargetNetwork.data(Sulc.data < 0) = 0; % remove network vertices in sulcus / fundus;
+% DN: I've changed this so that sulci have positive values
+TargetNetwork.data(Sulc.data > 0) = 0; % remove network vertices in sulcus / fundus;
 TargetNetwork.data(MedialWallVertices) = 0; % remove medial surface vertices
 O = TargetNetwork; % preallocate
 O.data = zeros(size(TargetNetwork.data)); % blank slate 
