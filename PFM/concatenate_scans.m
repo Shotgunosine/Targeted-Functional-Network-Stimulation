@@ -9,22 +9,22 @@ FD = []; % framewise displacement (head movement);
 for s = 1:length(Sessions)
 
     % count the number of runs for this session;
-    runs = dir([Subdir '/func/rest/session_' num2str(Sessions(s)) '/run_*']);
+    run_dirs = dir([Subdir '/func/rest/session_' num2str(Sessions(s)) '/run_*']);
 
     % sweep the runs;
-    for r = 1:length(runs)
+    for r = 1:length(run_dirs)
         
         % load head motion parameters;
-        rp = load([Subdir '/func/rest/session_' num2str(Sessions(s)) '/run_' num2str(r) '/MCF.par']);
+        rp = load([run_dirs(r).folder '/' run_dirs(r).name '/MCF.par']);
         
         % define the TR
-        TR = load([Subdir '/func/rest/session_' num2str(Sessions(s)) '/run_' num2str(r) '/TR.txt']);
+        TR = load([run_dirs(r).folder '/' run_dirs(r).name '/TR.txt']);
 
         % calculate FD;
         [fd] = calc_fd(rp,TR);
              
         % load the cifti file;
-        c = ft_read_cifti_mod([Subdir '/func/rest/session_' num2str(Sessions(s)) '/run_' num2str(r) '/' File '.dtseries.nii']);
+        c = ft_read_cifti_mod([run_dirs(r).folder '/' run_dirs(r).name '/' File '.dtseries.nii']);
         c.data = c.data - mean(c.data,2); % demean;
         
         % log the data;
@@ -48,7 +48,13 @@ nyq = (1/tr)/2;
 
 % create a tailored
 % stop band filter;
-stopband = [0.2 (nyq-0.019)];
+% if the top of the stop band is >= 1, need to bump it down a bit
+if nyq <= 0.2
+    stopband = [(nyq-0.00001) (nyq-0.019)];
+else
+    stopband = [0.2 (nyq-0.019)];
+end
+
 [B,A] = butter(10,stopband/nyq,'stop');
 
 % apply stopband filter 
