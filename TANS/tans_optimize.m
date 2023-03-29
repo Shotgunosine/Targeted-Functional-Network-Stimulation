@@ -1,4 +1,4 @@
-function tans_optimize(Subject,TargetNetwork,AvoidanceRegion,PercentileThresholds,SearchGrid,DistanceToScalp,SkinFile,VertexSurfaceArea,MidthickSurfs,WhiteSurfs,PialSurfs,MedialWallMasks,HeadMesh,AngleResolution,Uncertainty,CoilModel,OutDir,Paths)
+function tans_optimize(Subject,TargetNetwork,AvoidanceRegion,PercentileThresholds,SearchGrid,DistanceToScalp,SkinFile,VertexSurfaceArea,MidthickSurfs,WhiteSurfs,PialSurfs,MedialWallMasks,HeadMesh,AngleResolution,Uncertainty,CoilModel,OutDir,Paths,SIMNIBSPYTHON, SIMNIBSDIR)
 % cjl; cjl2007@med.cornell.edu;
 %
 % The inputs to the function are:
@@ -214,7 +214,7 @@ system(['rm -rf ' OutDir '/Optimize/Simulation/']);
 end
 
 %run simulation;
-run_simnibs(s);
+run_simnibs(s, SIMNIBSPYTHON, SIMNIBSDIR);
 
 % map concatenated volume to the 32k surface;
 system(['fslmerge -t ' OutDir '/Optimize/Simulation/subject_volumes/magnE.nii.gz ' OutDir '/Optimize/Simulation/subject_volumes/' Subject '*_magnE.nii.gz']);
@@ -426,5 +426,43 @@ end
 end
 
 
+function call = simnibs_cli_call(command, SIMNIBSPYTHON, SIMNIBSDIR)
+ % Creates a call to a a SimNBIS CLI command
+ call = [SIMNIBSPYTHON ' ' '"' SIMNIBSDIR filesep 'cli' filesep command '.py' '"'];
+end
+
+function result = run_simnibs(session, SIMNIBSPYTHON, SIMNIBSDIR)
+
+%Runs simnibs, given a session from sim_struct
+
+% Guilherme Saturnino, 2018
+
+%    This program is part of the SimNIBS package.
+%    Please check on www.simnibs.org how to cite our work in publications.
+%
+%    Copyright (C) 2013-2018 Axel Thielscher, Andre Antunes, Guilherme Saturnino
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    any later version.
+%
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+name_mat = [tempname,'.mat'];
+save('-v7', name_mat, 'session');
+[status,result] = system([simnibs_cli_call('run_simnibs', SIMNIBSPYTHON, SIMNIBSDIR) ' ' name_mat]);
+
+if status ~= 0
+    error('There was an error running SimNIBS:\n %s',result)
+end
+
+end
 
 
