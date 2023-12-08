@@ -1,4 +1,4 @@
-function tans_headmodels(Subject,T1w,T2w,OutDir,Paths)
+function tans_headmodels(Subject,T1w,T2w,OutDir,Paths,charmopts)
 % cjl; cjl2007@med.cornell.edu;
 
 % Description of input parameters
@@ -35,7 +35,7 @@ if ~isempty(T2w)
     system(['cp ' T2w ' ' OutDir '/HeadModel/T2w.nii.gz']); 
 
     % construct a tetrahedral headmesh using headreco using both the T1w and T2w images;
-    system(['charm ' Subject ' T1w.nii.gz T2w.nii.gz --skipregisterT2 > /dev/null 2>&1']);
+    system(['charm ' Subject ' T1w.nii.gz T2w.nii.gz --skipregisterT2 --forcerun ' charmopts]);
     
 else
     
